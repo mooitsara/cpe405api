@@ -1,8 +1,41 @@
 var express = require('express');
 var Item = require('../models/item');
-var jwt=require('jsonwebtoken');
-
+var jwt = require('jsonwebtoken');
 var itemRouter = express.Router();
+
+itemRouter.use(function (req, res, next) {
+
+  // check header or url parameters or post parameters for token
+  var token = req.cookies.token || req.body.token || req.query.token || req.headers['x-access-token'];
+
+  // decode token
+  if (token) {
+
+    // verifies secret and checks exp
+    jwt.verify(token, 'superSecret', function (err, decoded) {
+      if (err) {
+        return res.json({
+          success: false,
+          message: 'Failed to authenticate token.'
+        });
+      } else {
+        // if everything is good, save to request for use in other routes
+        req.decoded = decoded;
+        next();
+      }
+    });
+
+  } else {
+
+    // if there is no token
+    // return an error
+    return res.status(403).send({
+      success: false,
+      message: 'No token provided.'
+    });
+
+  }
+});
 
 itemRouter
   .route('/')
@@ -16,7 +49,7 @@ itemRouter
       }
 
       console.log(user);
-      response.render('index',{
+      response.render('index', {
         title: 'Welcome',
         users: user
       });
@@ -31,7 +64,7 @@ itemRouter
     console.log('POST /users');
 
     var user = new Item(request.body);
-    
+
     user.save();
     // response.status(201).send(user)
     response.redirect('/');
@@ -48,7 +81,7 @@ itemRouter
       }
 
       console.log(user);
-      response.render('get',{
+      response.render('get', {
         title: 'Customer',
         users: user
       });
@@ -64,7 +97,9 @@ itemRouter
 
     var userId = request.params.userId;
 
-    Item.findOne({ id: userId }, function (error, user) {
+    Item.findOne({
+      id: userId
+    }, function (error, user) {
 
       if (error) {
         response.status(500).send(error);
@@ -83,7 +118,9 @@ itemRouter
 
     var userId = parseInt(request.body.id);
 
-    Item.findOne({ id: userId }, function (error, user) {
+    Item.findOne({
+      id: userId
+    }, function (error, user) {
       if (error) {
         response.status(500).send(error);
         return;
@@ -108,7 +145,7 @@ itemRouter
       }
     });
   });
-  itemRouter
+itemRouter
   .route('/user/:userId/change')
   .post(function (request, response) {
 
@@ -116,7 +153,9 @@ itemRouter
 
     var userId = parseInt(request.body.id);
 
-    Item.findOne({ id: userId }, function (error, user) {
+    Item.findOne({
+      id: userId
+    }, function (error, user) {
 
       if (error) {
         response.status(500).send(error);
