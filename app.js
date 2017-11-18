@@ -5,7 +5,7 @@ var itemRouter = require('./routers/item');
 
 var app = express();
 
-var PORT = 5000;
+var PORT = process.env.PORT || 5000;
 
 app.set('view engine', 'ejs');
 
